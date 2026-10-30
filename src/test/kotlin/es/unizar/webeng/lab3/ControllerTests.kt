@@ -12,6 +12,10 @@ import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
+import io.mockk.every
+import io.mockk.justRun
+import io.mockk.verify
+import java.util.Optional
 
 private val MANAGER_REQUEST_BODY = { name: String ->
     """
@@ -55,7 +59,13 @@ class ControllerTests {
         // SETUP - COMPLETE ME!
         // Initial state: the collection is empty. No employee exists.
         // Runtime state: the first save stores Mary, Manager, as id 1. The second save stores Mary, Manager, as id 2.
-        TODO("Complete the mock setup for POST test")
+        every {
+            employeeRepository.save(any<Employee>())
+        } answers {
+            Employee("Mary", "Manager", 1)
+        } andThenAnswer {
+            Employee("Mary", "Manager", 2)
+        }
 
         mvc
             .post("/employees") {
@@ -88,7 +98,14 @@ class ControllerTests {
         // VERIFY - COMPLETE ME!
         // Hint: What repository methods should be called for a POST operation?
         // What methods should NOT be called? Think about the difference between safe and unsafe operations.
-        TODO("Complete the verification for POST test")
+    verify(exactly= 2) {
+        employeeRepository.save(Employee("Mary","Manager",null))
+    }
+    verify(exactly= 0) {
+        employeeRepository.findById(any())
+        employeeRepository.findAll()
+        employeeRepository.deleteById(any())
+        }
     }
 
     @Test
@@ -96,8 +113,16 @@ class ControllerTests {
         // SETUP
         // Initial state: /employees/1 is Mary, Manager, id 1. /employees/2 has no representation.
         // Runtime state: both stay that way.
-        TODO("Complete the mock setup for GET test")
-
+        every {
+            employeeRepository.findById(1)
+        } answers{
+            Optional.of(Employee("Mary","Manager",1))
+        }
+        every {
+            employeeRepository.findById(2)
+        } answers{
+            Optional.empty()
+        }
         mvc.get("/employees/1").andExpect {
             status { isOk() }
             content {
